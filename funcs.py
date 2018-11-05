@@ -1,5 +1,9 @@
 import numpy as np
 import random
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
 
 def generate(seqNum,seqLen,vocab,alpha):
     
