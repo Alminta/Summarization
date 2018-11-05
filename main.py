@@ -13,6 +13,7 @@ SEQ_LEN = 15
 SEQ_NUM = 200
 VOCAB = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']
 ALPHA = 0.2
+MAX_LEN = 5
 
 # Hidden size of enc and dec need to be equal if last hidden of encoder becomes init hidden of decoder
 # Otherwise we would need e.g. a linear layer to map to a space with the correct dimension
@@ -21,8 +22,8 @@ TEST_SIZE = 200
 EPOCHS = 10
 TEACHER_FORCING = True
 
-assert TRAINING_SIZE % BATCH_SIZE == 0
-
+#assert TRAINING_SIZE % BATCH_SIZE == 0
+LEARNING_RATE=0.001
 
 encoder = EncoderRNN(NUM_INPUTS, NUM_UNITS_ENC).to(device)
 decoder = DecoderRNN(NUM_UNITS_DEC, NUM_OUTPUTS).to(device)
@@ -39,7 +40,7 @@ criterion = nn.NLLLoss()
 #unique_text_targets = set(text_targ)
 
 # Get validation set
-Full,Short = generate(SEQ_NUM, SEQ_LEN, VOCAB, ALPHA)
+Full,Short,t1,t2 = generate(SEQ_NUM, SEQ_LEN, VOCAB, ALPHA,MAX_LEN)
 #val_inputs = torch.tensor(val_inputs)
 #val_targets = torch.tensor(val_targets)
 #val_targets_in = torch.tensor(val_targets_in)
@@ -67,3 +68,5 @@ for epoch in range(1, EPOCHS + 1):
         print(pred_text[i], "\t", val_text_in[i])
     print()
 """
+
+print(Full,Short,t1,t2)

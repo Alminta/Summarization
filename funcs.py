@@ -5,28 +5,37 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-def generate(seqNum,seqLen,vocab,alpha):
+def generate(seqNum,seqLen,vocab,alpha,maxLen):
     
     length=len(vocab)
     
+    t1 = torch.zeros(seqNum,seqLen).type(torch.IntTensor)
+    t2 = torch.zeros(seqNum,maxLen).type(torch.IntTensor)
+
     listFull = []
     listShort = []
     
     for i in range(seqNum):
         listFull.append('')
         listShort.append('')
+        k=0
         for j in range(seqLen):
-            if random.uniform(0,1)<alpha:
-                date = str(np.random.randint(0,9))
-                listFull[i] += date
-                listShort[i] += date
+            if random.uniform(0,1)<alpha and len(listShort[i])<maxLen:
+                date = np.random.randint(1,9)
+                listFull[i] += str(date)
+                listShort[i] += str(date)
+                t1[i,j] = date
+                t2[i,k] = date
+                k += 1
             else:
-                word = vocab[np.random.randint(0,length)]
-                listFull[i] += word               
+                word = np.random.randint(10,10+length)
+                listFull[i] += str(vocab[word-10])
+                t1[i,j] = word
+
         
         
     
-    return listFull, listShort
+    return listFull, listShort, t1, t2
 
 
 class EncoderRNN(nn.Module):
