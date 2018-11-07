@@ -5,6 +5,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
+device = "cpu"
+SEQ_NUM = 1000
+TRAINING_SIZE = SEQ_NUM
+TEACHER_FORCING = True
 def generate(seqNum,seqLen,vocab,alpha,maxLen):
     
     length=len(vocab)
@@ -34,8 +38,9 @@ def generate(seqNum,seqLen,vocab,alpha,maxLen):
 
         
         
+    t2,_=torch.sort(t2,1)
     
-    return listFull, listShort, t1, t2
+    return listFull, listShort.sort(), t1, t2
 
 
 class EncoderRNN(nn.Module):
