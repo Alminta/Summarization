@@ -10,7 +10,65 @@ SEQ_NUM = 1000
 TRAINING_SIZE = SEQ_NUM
 TEACHER_FORCING = True
 def generate(seqNum,seqLen,vocab,alpha,maxLen):
+    target = ['zero','one','two','three','four','five','six','seven','eight','nine']
+    targetAsNum = 
+
+
+    length=len(vocab)
     
+    t1 = torch.zeros(seqNum,seqLen).type(torch.IntTensor)
+    t2 = torch.zeros(seqNum,maxLen).type(torch.IntTensor)
+
+    listFull = []
+    listShort = []
+    
+    for i in range(seqNum):
+        listFull.append('')
+        listShort.append('')
+        k=0
+
+        while len(listFull[i])-4<seqLen:
+
+            if random.uniform(0,1)<alpha and len(listShort[i])<maxLen:
+                date = np.random.randint(0,9)
+                listFull[i] += target[date]+' '
+                listShort[i] += str(date)
+                t1[i,j] = date
+                t2[i,k] = date
+                k += 1
+
+        for j in range(seqLen):
+            if random.uniform(0,1)<alpha and len(listShort[i])<maxLen:
+                date = np.random.randint(1,9)
+                listFull[i] += str(date)
+                listShort[i] += str(date)
+                t1[i,j] = date
+                t2[i,k] = date
+                k += 1
+            else:
+                word = np.random.randint(10,10+length)
+                listFull[i] += str(vocab[word-10])
+                t1[i,j] = word
+
+        
+        
+    t2,_=torch.sort(t2,1)
+    
+    return listFull, listShort.sort(), t1, t2
+
+def genWord(maxLen,minLen,vocab):
+    r = random.randint(3,5)
+    word = ''
+
+    for i in range(r):
+        word += vocab[random.randint(0,len(vocab))]
+
+    return word
+
+def generateOld(seqNum,seqLen,vocab,alpha,maxLen):
+    target = ['zero','one','two','three','four','five','six','seven','eight','nine']
+
+
     length=len(vocab)
     
     t1 = torch.zeros(seqNum,seqLen).type(torch.IntTensor)
@@ -41,6 +99,7 @@ def generate(seqNum,seqLen,vocab,alpha,maxLen):
     t2,_=torch.sort(t2,1)
     
     return listFull, listShort.sort(), t1, t2
+
 
 
 class EncoderRNN(nn.Module):
