@@ -6,18 +6,18 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 device = "cpu"
-SEQ_NUM = 1000
+SEQ_NUM = 10
 TRAINING_SIZE = SEQ_NUM
 TEACHER_FORCING = True
 def generate(seqNum,seqLen,vocab,alpha,maxLen):
     target = ['zero','one','two','three','four','five','six','seven','eight','nine']
-    targetAsNum = 
+    
 
 
     length=len(vocab)
     
     t1 = torch.zeros(seqNum,seqLen).type(torch.IntTensor)
-    t2 = torch.zeros(seqNum,maxLen).type(torch.IntTensor)
+    t2 = torch.zeros(seqNum,maxLen*5).type(torch.IntTensor)
 
     listFull = []
     listShort = []
@@ -25,43 +25,44 @@ def generate(seqNum,seqLen,vocab,alpha,maxLen):
     for i in range(seqNum):
         listFull.append('')
         listShort.append('')
-        k=0
-
+        i1=0
+        i2=0
         while len(listFull[i])-4<seqLen:
 
             if random.uniform(0,1)<alpha and len(listShort[i])<maxLen:
                 date = np.random.randint(0,9)
-                listFull[i] += target[date]+' '
+                listFull[i] += target[date] + ' '
                 listShort[i] += str(date)
-                t1[i,j] = date
-                t2[i,k] = date
-                k += 1
-
-        for j in range(seqLen):
-            if random.uniform(0,1)<alpha and len(listShort[i])<maxLen:
-                date = np.random.randint(1,9)
-                listFull[i] += str(date)
-                listShort[i] += str(date)
-                t1[i,j] = date
-                t2[i,k] = date
-                k += 1
+                for w in target[date]:
+                    index = vocab.index(w)
+                    t1[i,i1] = index
+                    t2[i,i2] = index
+                    i1 += 1
+                    i2 += 1
             else:
-                word = np.random.randint(10,10+length)
-                listFull[i] += str(vocab[word-10])
-                t1[i,j] = word
-
+                word = genWord(3,5,vocab)
+                if word not in target:
+                    listFull[i] += word + ' '
+                    listShort[i] += 'w'
+                    for w in word:
+                        index = vocab.index(w)
+                        t1[i,i1] = index
+                        #t2[i,i2] = index
+                        i1 += 1
+                        #i2 += 1
+        listFull[i]=listFull[i][:-1]
+      
         
-        
-    t2,_=torch.sort(t2,1)
+    #t2,_=torch.sort(t2,1)
     
-    return listFull, listShort.sort(), t1, t2
+    return listFull, listShort, t1, t2
 
-def genWord(maxLen,minLen,vocab):
-    r = random.randint(3,5)
+def genWord(minLen,maxLen,vocab):
+    r = random.randint(minLen,maxLen)
     word = ''
 
     for i in range(r):
-        word += vocab[random.randint(0,len(vocab))]
+        word += vocab[random.randint(0,len(vocab)-1)]
 
     return word
 
