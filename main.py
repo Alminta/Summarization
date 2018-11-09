@@ -5,7 +5,7 @@ from funcs import *
 device = "cpu"
 print("Device in use:", device)
 
-NUM_INPUTS = 36 #No. of possible characters
+NUM_INPUTS = 27 #No. of possible characters
 NUM_OUTPUTS = 11  # (0-9 + '#')
 
 ### Hyperparameters and general configs
