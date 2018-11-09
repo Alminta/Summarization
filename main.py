@@ -66,7 +66,7 @@ targets = [t2[i * BATCH_SIZE: (i + 1) * BATCH_SIZE] for i in range(TRAINING_SIZE
 targets_in = [t2[i * BATCH_SIZE: (i + 1) * BATCH_SIZE] for i in range(TRAINING_SIZE // BATCH_SIZE)]
 
 # Quick and dirty - just loop over training set without reshuffling
-
+"""
 for epoch in range(1, EPOCHS + 1):
     train(encoder, decoder, inputs, targets, targets_in, criterion, enc_optimizer, dec_optimizer, epoch, SEQ_LEN)
     _, loss, accuracy = test(encoder, decoder, t1val, t2val, t2val, criterion, MAX_LEN)
@@ -80,5 +80,5 @@ for epoch in range(1, EPOCHS + 1):
     for i in range(10):
         print(pred_text[i], "\t", Fullval[i])
     #print()
-
-#print(Full,Short,t1,t2)
+"""
+print(Fullval,Shortval,t1val,t2val)
