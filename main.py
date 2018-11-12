@@ -18,7 +18,7 @@ MAX_LEN = 15
 # Hidden size of enc and dec need to be equal if last hidden of encoder becomes init hidden of decoder
 # Otherwise we would need e.g. a linear layer to map to a space with the correct dimension
 NUM_UNITS_ENC = NUM_UNITS_DEC = 2+SEQ_LEN
-TEST_SIZE = 200
+TEST_SIZE = 240
 EPOCHS = 10
 
 
@@ -37,9 +37,10 @@ decoder = DecoderRNN(NUM_UNITS_DEC, NUM_OUTPUTS).to(device)
 enc_optimizer = optim.RMSprop(encoder.parameters(), lr=LEARNING_RATE,weight_decay=1e-6,momentum=0.5)
 dec_optimizer = optim.RMSprop(decoder.parameters(), lr=LEARNING_RATE,weight_decay=1e-6,momentum=0.5)
 criterion = nn.NLLLoss()
-
+#print(encoder.parameters())
 # Get training set
 _,_,t1,t2,t3 = generate(SEQ_NUM, SEQ_LEN, VOCAB, ALPHA,MAX_LEN)
+#print(t1.size(),t2.size(),t3.size())
 #inputs, _, targets_in, targets, targets_seqlen, _, _, _, text_targ = generate(TRAINING_SIZE, min_len=MIN_SEQ_LEN, max_len=MAX_SEQ_LEN)
 #max_target_len = max(targets_seqlen)
 #inputs = torch.tensor(inputs).long()
@@ -49,6 +50,7 @@ _,_,t1,t2,t3 = generate(SEQ_NUM, SEQ_LEN, VOCAB, ALPHA,MAX_LEN)
 
 # Get validation set
 Fullval,Shortval,t1val,t2val,t3val = generate(SEQ_NUM, SEQ_LEN, VOCAB, ALPHA,MAX_LEN)
+
 #val_inputs = torch.tensor(val_inputs)
 #val_targets = torch.tensor(val_targets)
 #val_targets_in = torch.tensor(val_targets_in)

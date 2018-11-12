@@ -6,7 +6,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 device = "cpu"
-SEQ_NUM = 10
+SEQ_NUM = 800
 TRAINING_SIZE = SEQ_NUM
 TEACHER_FORCING = True
 def generate(seqNum,seqLen,vocab,alpha,maxLen):
@@ -16,7 +16,7 @@ def generate(seqNum,seqLen,vocab,alpha,maxLen):
 
     length=len(vocab)
     
-    t1 = torch.zeros(seqNum,seqLen+seqNum).type(torch.IntTensor)
+    t1 = torch.zeros(seqNum,seqLen).type(torch.IntTensor)
     t2 = torch.zeros(seqNum,maxLen).type(torch.IntTensor)
     t3 = torch.zeros(seqNum,maxLen).type(torch.IntTensor)
 #*len(max(target,key=len))  
@@ -28,7 +28,7 @@ def generate(seqNum,seqLen,vocab,alpha,maxLen):
         i1=0
         i2=0
         numNums = 0
-        while (len(listFull[i])+5)<(seqLen+seqNum):
+        while (len(listFull[i])+5)<(seqLen):
 
             if random.uniform(0,1)<alpha and numNums<maxLen-1:
                 date = np.random.randint(0,9)
@@ -201,11 +201,12 @@ def forward_pass(encoder, decoder, x, t, t_in, criterion, max_t_len, teacher_for
 
     :return: output (after log-softmax), loss, accuracy (per-symbol)
     """
+    #print(x.size(),'Et eller andet lort')
     # Run encoder and get last hidden state (and output)
     batch_size = x.size(0)
     enc_h, cn = encoder.init_hidden(batch_size)
     enc_out, enc_h, cn= encoder(x, enc_h,cn)
-
+    #print(enc_out.size())
     dec_h = enc_h  # Init hidden state of decoder as hidden state of encoder
     dec_input = t_in
     out = decoder(dec_input, dec_h, max_t_len, cn, teacher_forcing)
@@ -223,9 +224,11 @@ def train(encoder, decoder, inputs, targets, targets_in, criterion, enc_optimize
     #batch_size = inputs.size(0)
     #enc_h = encoder.init_hidden(batch_size)
 
+    print(inputs[0].size(),targets[0].size(),targets_in[0].size())
+    #print(inputs)
     for batch_idx, (x, t, t_in) in enumerate(zip(inputs, targets, targets_in)):
-        
-            
+        #print(batch_idx)
+        #print(x.size())    
         out, loss, accuracy = forward_pass(encoder, decoder, x, t, t_in, criterion, max_t_len, True)
             
         
@@ -235,9 +238,9 @@ def train(encoder, decoder, inputs, targets, targets_in, criterion, enc_optimize
         enc_optimizer.step()
         dec_optimizer.step()
         # INSERT YOUR CODE HERE
+        #print(batch_idx)
         
-        
-        if batch_idx % 200 == 0:
+        if batch_idx % 50 == 0:
             encoder.eval()
             decoder.eval()
             print('Epoch {} [{}/{} ({:.0f}%)]\tTraining loss: {:.4f} \tTraining accuracy: {:.1f}%'.format(
