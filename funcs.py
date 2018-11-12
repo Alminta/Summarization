@@ -16,13 +16,8 @@ def generate(seqNum,seqLen,vocab,alpha,maxLen):
 
     length=len(vocab)
     
-<<<<<<< HEAD
-#    t1 = torch.zeros(seqNum*len(max(target,key=len)),seqLen).type(torch.IntTensor)
-#    t2 = torch.zeros(seqNum,maxLen).type(torch.IntTensor)
-=======
     t1 = torch.zeros(seqNum,seqLen).type(torch.IntTensor)
     t2 = torch.zeros(seqNum,maxLen*5).type(torch.IntTensor)
->>>>>>> 00d9c2192032942f70b1fc401ed726c3094f9008
 
     listFull = []
     listShort = []
