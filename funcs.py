@@ -17,11 +17,10 @@ def generate(seqNum,seqLen,vocab,alpha,maxLen):
     length=len(vocab)
     
     t1 = torch.zeros(seqNum,seqLen).type(torch.IntTensor)
-    t2 = torch.zeros(seqNum,maxLen*5).type(torch.IntTensor)
+    t2 = torch.zeros(seqNum,maxLen*len(max(target,key=len))).type(torch.IntTensor)
 
     listFull = []
     listShort = []
-    # t1 skal 0-paddes os ' ' er den sidste i rækken så den har et nummer. længden af t[i,j] er den længste mulige sekvens.
     for i in range(seqNum):
         listFull.append('')
         listShort.append('')
@@ -41,15 +40,16 @@ def generate(seqNum,seqLen,vocab,alpha,maxLen):
                     i2 += 1
             else:
                 word = genWord(3,5,vocab)
-                if word not in target:
-                    listFull[i] += word + ' '
-                    listShort[i] += 'w'
-                    for w in word:
-                        index = vocab.index(w)
-                        t1[i,i1] = index
-                        #t2[i,i2] = index
-                        i1 += 1
-                        #i2 += 1
+                while word in target:
+                    word = genWord(3,5,vocab)                
+                listFull[i] += word + ' '
+                listShort[i] += 'w'
+                for w in word:
+                    index = vocab.index(w)
+                    t1[i,i1] = index
+                    #t2[i,i2] = index
+                    i1 += 1
+                    #i2 += 1
         listFull[i]=listFull[i][:-1]
       
         
@@ -256,5 +256,5 @@ def get_pred(log_probs):
     Get class prediction (digit prediction) from the net's output (the log_probs)
     :param log_probs: Tensor of shape [batch_size x n_classes x sequence_len]
     :return:
-    """get_pred
+    """
     return torch.argmax(log_probs, dim=1)
