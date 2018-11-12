@@ -11,14 +11,15 @@ TRAINING_SIZE = SEQ_NUM
 TEACHER_FORCING = True
 def generate(seqNum,seqLen,vocab,alpha,maxLen):
     target = ['zero','one','two','three','four','five','six','seven','eight','nine']
-    
-
+    #EOS = '#'
+    EOSNum = len(vocab)
 
     length=len(vocab)
     
-    t1 = torch.zeros(seqNum,seqLen).type(torch.IntTensor)
-    t2 = torch.zeros(seqNum,maxLen*len(max(target,key=len))).type(torch.IntTensor)
-
+    t1 = torch.zeros(seqNum,seqLen+seqNum).type(torch.IntTensor)
+    t2 = torch.zeros(seqNum,maxLen).type(torch.IntTensor)
+    t3 = torch.zeros(seqNum,maxLen).type(torch.IntTensor)
+#*len(max(target,key=len))  
     listFull = []
     listShort = []
     for i in range(seqNum):
@@ -26,43 +27,57 @@ def generate(seqNum,seqLen,vocab,alpha,maxLen):
         listShort.append('')
         i1=0
         i2=0
-        while len(listFull[i])-4<seqLen:
+        numNums = 0
+        while (len(listFull[i])+5)<(seqLen+seqNum):
 
-            if random.uniform(0,1)<alpha and len(listShort[i])<maxLen:
+            if random.uniform(0,1)<alpha and numNums<maxLen-1:
                 date = np.random.randint(0,9)
                 listFull[i] += target[date] + ' '
                 listShort[i] += str(date)
+                numNums += 1
+
                 for w in target[date]:
                     index = vocab.index(w)
                     t1[i,i1] = index
-                    t2[i,i2] = index
                     i1 += 1
-                    i2 += 1
+                t1[i,i1] = len(vocab)-1
+                i1 += 1
+                t2[i,i2] = date
+                i2 += 1    
             else:
                 word = genWord(3,5,vocab)
                 while word in target:
                     word = genWord(3,5,vocab)                
                 listFull[i] += word + ' '
                 listShort[i] += 'w'
+                
                 for w in word:
                     index = vocab.index(w)
                     t1[i,i1] = index
                     #t2[i,i2] = index
                     i1 += 1
                     #i2 += 1
+                t1[i,i1] = len(vocab)-1
+                i1 += 1
         listFull[i]=listFull[i][:-1]
+        #listFull[i] += EOS
+        #listShort[i] += EOS
+        t3[i,1:i2+1]=t2[i,:i2]
+        t2[i,i2]=10#EOSNum
+        t3[i,0]=10#EOSNUM
+        #t2[i,i2]=EOSNum
       
         
     #t2,_=torch.sort(t2,1)
     
-    return listFull, listShort, t1, t2
+    return listFull, listShort, t1, t2, t3
 
 def genWord(minLen,maxLen,vocab):
     r = random.randint(minLen,maxLen)
     word = ''
 
     for i in range(r):
-        word += vocab[random.randint(0,len(vocab)-1)]
+        word += vocab[random.randint(0,len(vocab)-2)]
 
     return word
 
