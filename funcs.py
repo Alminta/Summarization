@@ -301,3 +301,5 @@ def get_pred(log_probs):
     :return:
     """
     return torch.argmax(log_probs, dim=1)
+
+# junk in the bottom
