@@ -158,6 +158,25 @@ class DecoderRNN(nn.Module):
         rnn = nn.LSTM
         self.rnn = rnn(self.hidden_size, self.hidden_size, 1, batch_first=True)
         
+
+        # Attention
+
+        #.W_2 = Parameter(init.kaiming_normal_(torch.Tensor(num_output, num_hidden))) #template
+
+        self.v_a = Parameter(init.kaiming_normal_(torch.Tensor(hidden_size, 1)))
+
+        self.W_h = Parameter(init.kaiming_normal_(torch.Tensor(hidden_size, hidden_size)))
+
+        self.W_s = Parameter(init.kaiming_normal_(torch.Tensor(hidden_size, hidden_size)))
+
+        #self.w_c = Parameter(init.kaiming_normal_(torch.Tensor(num_output, num_hidden))) need to be defined
+
+        self.b_alpha = Parameter(init.constant_(torch.Tensor(hidden_size),0))
+
+
+
+
+
     def forward(self, inputs, hidden, output_len, cn, teacher_forcing=False):
         # Input shape: [batch, output_len]
         # Hidden shape: [seq_len=1, batch_size, hidden_dim] (the last hidden state of the encoder)
@@ -280,3 +299,5 @@ def get_pred(log_probs):
     :return:
     """
     return torch.argmax(log_probs, dim=1)
+
+# junk in the bottom
