@@ -286,6 +286,8 @@ def test(encoder, decoder, inputs, targets, targets_in, criterion, max_t_len):
     return out, loss, accuracy
 
 
+#mitjunk
+
 def numbers_to_text(seq):
     return "".join([str(to_np(i)) if to_np(i) != 10 else '#' for i in seq])
 
