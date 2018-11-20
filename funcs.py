@@ -1,9 +1,9 @@
 import numpy as np
 import random
-import torch
+import torch as torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
+import torch.optim as optimf
 from torch.nn.parameter import Parameter
 
 device = "cpu"
@@ -177,7 +177,11 @@ class DecoderRNN(nn.Module):
 
 
 
+<<<<<<< HEAD
     def forward(self, inputs, hidden, output_len, cn, enc_out, teacher_forcing=False):
+=======
+    def forward(self, inputs, hidden, output_len, cn, encoder_out, teacher_forcing=False):
+>>>>>>> 167d530b8540a6b8ab8a1e595b3d40c05dfbc88e
         # Input shape: [batch, output_len]
         # Hidden shape: [seq_len=1, batch_size, hidden_dim] (the last hidden state of the encoder)
         #print('c_0: {:}'.format(c_0))
@@ -256,7 +260,9 @@ def forward_pass(encoder, decoder, x, t, t_in, criterion, max_t_len, teacher_for
     batch_size = x.size(0)
     enc_h, cn = encoder.init_hidden(batch_size)
     enc_out, enc_h, cn= encoder(x, enc_h,cn)
-    #print(enc_out.size())
+    print('\n')
+    print(enc_out.size())
+    print(enc_h.size())
     dec_h = enc_h  # Init hidden state of decoder as hidden state of encoder
     dec_input = t_in
     out = decoder(dec_input, dec_h, max_t_len, cn, enc_out, teacher_forcing)
