@@ -177,7 +177,11 @@ class DecoderRNN(nn.Module):
 
 
 
+<<<<<<< HEAD
+    def forward(self, inputs, hidden, output_len, cn, enc_out, teacher_forcing=False):
+=======
     def forward(self, inputs, hidden, output_len, cn, encoder_out, teacher_forcing=False):
+>>>>>>> 167d530b8540a6b8ab8a1e595b3d40c05dfbc88e
         # Input shape: [batch, output_len]
         # Hidden shape: [seq_len=1, batch_size, hidden_dim] (the last hidden state of the encoder)
         #print('c_0: {:}'.format(c_0))
@@ -209,6 +213,33 @@ class DecoderRNN(nn.Module):
             output = torch.stack(output).permute(1, 0, 2)  # [batch_size x seq_len x output_size]
 
         return output
+
+
+# attention
+# ASSUMING THAT enc_out HAS THE DIMENSIONS [ B, T, d ]
+part1 = torch.matmul(enc_out,W_h) # gives the part1 dimension [ B, T, W_h[1] ] since W_h converts from [ d ] to [ W_h[1] ]
+part1.unsqueeze(1)
+
+# ASSUMIMG THAT out HAS THE DIMENSIONS [ B, T, d ]
+part2 = torch.matmul(out, W_s) # gives the part2 dimension [ B, T, W_s[1] ] since W_s converts from [ d ] to [ W_s[1] ]
+part2 = part2.unsqueeze(1)
+
+# ASSUMING DIMENSIONS [ B, T, b ].
+john = part1 + part2 + b_alpha # Summs the "boxes" part1 & part2 and adds b_alpha along the [ b ] dimension
+
+e = np.sum(v_a * torch.tanh(john), axis=2)
+
+alpha = F.softmax(e)
+
+alpha = mask(attention_lengths).type(torch.FloatTensor) * alpha
+
+alpha = alpha / np.sum(alpha, axis=1)
+
+# WE DO NOT USE THE ATTENTION TRACKER I GUESS https://i.kym-cdn.com/photos/images/original/001/231/999/ba5.jpg
+
+c = np.sum(alpha.unsqueeze(2)*hidden.squeeze(),axis=1)
+
+
 
 
 def forward_pass(encoder, decoder, x, t, t_in, criterion, max_t_len, teacher_forcing):
