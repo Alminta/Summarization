@@ -172,7 +172,7 @@ class DecoderRNN(nn.Module):
 
         #self.w_c = Parameter(init.kaiming_normal_(torch.Tensor(num_output, num_hidden))) need to be defined
 
-        self.b_alpha = Parameter(nn.init.constant_(torch.Tensor(output_size),0))
+        self.b_alpha = Parameter(nn.init.constant_(torch.Tensor(hidden_size),0))
 
 
 
@@ -185,19 +185,34 @@ class DecoderRNN(nn.Module):
         #print('teacher_forching{:}'.format(teacher_forcing))
               
         if teacher_forcing:
-            dec_input = inputs
-            print('DECODER: dec_inputs = ',dec_input.shape)
-            embedded = self.embedding(dec_input)   # shape [batch, output_len, hidden_dim]
-            print('DECODER: embedding ting = ',embedded.shape)
-            out, (dec_hidden, dec_cn) = self.rnn(embedded, (hidden,cn))
+            denNyeKonge = torch.zeros(hidden.shape[0],output_len,hidden.shape[-1]) # Init the new king. Cheers!
             
+
+            dec_input = inputs
+            print(dec_input)
+            embedded = self.embedding(dec_input)
+            #out, (hidden, cn) = self.rnn(embedded, (hidden,cn))
+            print('Skaal!')
+            for i in range(output_len):
+                out, (hidden, cn) = self.rnn(embedded[:,i,...].unsqueeze(1), (hidden,cn))
+                print('\n FORWARD: out = ',out.shape,'\n FORWARD: encoder_out = ',encoder_out.shape)
+
+                part1 = torch.matmul(encoder_out,self.W_h) # gives the part1 dimension [ B, T, W_h[1] ] since W_h converts from [ d ] to [ W_h[1] ]
+                part2 = torch.matmul(out, self.W_s) # gives the part2 dimension [ B, T, W_s[1] ] since W_s converts from [ d ] to [ W_s[1] ]
+                bjorn = part1 + part2 + self.b_alpha.unsqueeze(0).unsqueeze(0)
+                print('FORWARD: part1 = ',part1.shape,'\n FORWARD: part2 = ',part2.shape,'\n FORWARD: biazz = ',self.b_alpha.unsqueeze(0).unsqueeze(0).shape)
+                print('FORWARD: part1 + part2', (part1 + part2.unsqueeze(1)).shape)
+                print('FORWARD: Bjorn = ',bjorn.shape)
+                denNyeKonge[i,...] = bjorn
+
 
             print('DECODER: out =',out.shape,'\n DECODER: enc_out =',encoder_out.shape,'\n DECODER: embedded =',embedded.shape,'\n DECODER: hidden = ',hidden.shape)
             # attention
             
             # ASSUMING THAT enc_out HAS THE DIMENSIONS [ B, T, d ]
+
             part1 = torch.matmul(encoder_out,self.W_h) # gives the part1 dimension [ B, T, W_h[1] ] since W_h converts from [ d ] to [ W_h[1] ]
-            part1.unsqueeze(1)
+
 
             # ASSUMIMG THAT out HAS THE DIMENSIONS [ B, T, d ]
             part2 = torch.matmul(out, self.W_s) # gives the part2 dimension [ B, T, W_s[1] ] since W_s converts from [ d ] to [ W_s[1] ]
