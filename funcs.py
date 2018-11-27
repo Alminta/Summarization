@@ -2,7 +2,7 @@ import numpy as np
 import random
 import torch 
 import torch.nn as nn
- 
+import torch.nn.functional as F
 import torch.optim as optimf
 from torch.nn.parameter import Parameter
 
@@ -164,7 +164,7 @@ class DecoderRNN(nn.Module):
 
         #.W_2 = Parameter(init.kaiming_normal_(torch.Tensor(num_output, num_hidden))) #template
 
-        self.v_a = Parameter(nn.init.kaiming_normal_(torch.Tensor(output_size, 1)))
+        self.v_a = Parameter(nn.init.kaiming_normal_(torch.Tensor(hidden_size,1)))
 
         self.W_h = Parameter(nn.init.kaiming_normal_(torch.Tensor(hidden_size, hidden_size)))
 
@@ -174,6 +174,9 @@ class DecoderRNN(nn.Module):
 
         self.b_alpha = Parameter(nn.init.constant_(torch.Tensor(hidden_size),0))
 
+        self.V_in = nn.Linear(self.hidden_size*2,self.hidden_size*2)
+
+        self.V_out = nn.Linear(self.hidden_size,self.output_size)
 
 
 
@@ -185,15 +188,15 @@ class DecoderRNN(nn.Module):
         #print('teacher_forching{:}'.format(teacher_forcing))
               
         if teacher_forcing:
-            denNyeKonge = torch.zeros(hidden.shape[0],output_len,hidden.shape[-1]) # Init the new king. Cheers!
-            
-
             dec_input = inputs
+            denNyeKonge = torch.zeros(dec_input.shape[1],hidden.shape[1],output_len) # Init the new king. Cheers!
+
             print(dec_input)
             embedded = self.embedding(dec_input)
+            print('FORWARD: hidden =',hidden.shape,'\n FORWARD: dennyekonge = ', denNyeKonge.shape,'\n FORWARD: embedded = ',embedded.shape,'\n FORWARD: dec_input = ',dec_input.shape)
             #out, (hidden, cn) = self.rnn(embedded, (hidden,cn))
             print('Skaal!')
-            for i in range(output_len):
+            for i in range(dec_input.shape[1]):
                 out, (hidden, cn) = self.rnn(embedded[:,i,...].unsqueeze(1), (hidden,cn))
                 print('\n FORWARD: out = ',out.shape,'\n FORWARD: encoder_out = ',encoder_out.shape)
 
@@ -202,9 +205,13 @@ class DecoderRNN(nn.Module):
                 bjorn = part1 + part2 + self.b_alpha.unsqueeze(0).unsqueeze(0)
                 print('FORWARD: part1 = ',part1.shape,'\n FORWARD: part2 = ',part2.shape,'\n FORWARD: biazz = ',self.b_alpha.unsqueeze(0).unsqueeze(0).shape)
                 print('FORWARD: part1 + part2', (part1 + part2.unsqueeze(1)).shape)
-                print('FORWARD: Bjorn = ',bjorn.shape)
-                denNyeKonge[i,...] = bjorn
-
+                print('FORWARD: Bjorn = ',bjorn.shape, '\n FORWARD: tanh(bjorn) = ', F.tanh(bjorn).shape, '\n FORWARD: v_a = ', self.v_a.shape)
+                print('FORWARD: tanh(bjorn).type = ', F.tanh(bjorn).type)
+                print('FORWARD: v_a * tanh(bjorn) = ', torch.matmul(F.tanh(bjorn),self.v_a).shape)
+                
+                Cool = torch.matmul(F.tanh(bjorn),self.v_a).permute(2,0,1)
+                Cool = torch.cat((out,Cool))
+                denNyeKonge[i,...] = F.softmax(self.V_out(self.V_in(torch.cat((out,Cool)))))
 
             print('DECODER: out =',out.shape,'\n DECODER: enc_out =',encoder_out.shape,'\n DECODER: embedded =',embedded.shape,'\n DECODER: hidden = ',hidden.shape)
             # attention

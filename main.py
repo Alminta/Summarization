@@ -92,4 +92,4 @@ for epoch in range(1, EPOCHS + 1):
         print(pred_text[i], "\t", Shortval[i], "\t" ,t2val[i])
     #print()
 
-#print(Fullval,Shortval,t1val,t2val)
+#print(Fullval,Shortval,t1val,t2val)    
