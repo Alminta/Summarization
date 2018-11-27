@@ -139,7 +139,7 @@ class EncoderRNN(nn.Module):
         # Hidden shape [1, batch, embed], last hidden state of the GRU cell
         # We will feed this last hidden state into the decoder
         output, (hidden,cn) = self.rnn(embedded, (hidden,cn))
-        print('ENCODER: output = ',output.shape,'\n ENCODER: hidden = ',hidden.shape)
+        #print('ENCODER: output = ',output.shape,'\n ENCODER: hidden = ',hidden.shape)
         return output, hidden, cn
 
     def init_hidden(self, batch_size):
@@ -176,7 +176,7 @@ class DecoderRNN(nn.Module):
 
         self.V_in = nn.Linear(self.hidden_size*2,self.hidden_size*2)
 
-        self.V_out = nn.Linear(self.hidden_size,self.output_size)
+        self.V_out = nn.Linear(self.hidden_size*2,self.output_size)
 
 
 
@@ -189,64 +189,44 @@ class DecoderRNN(nn.Module):
               
         if teacher_forcing:
             dec_input = inputs
-            denNyeKonge = torch.zeros(dec_input.shape[1],hidden.shape[1],output_len) # Init the new king. Cheers!
+            denNyeKonge = torch.zeros(hidden.shape[1],self.output_size,dec_input.shape[1]) # Init the new king. Cheers!
 
-            print(dec_input)
+            #print(dec_input)
             embedded = self.embedding(dec_input)
-            print('FORWARD: hidden =',hidden.shape,'\n FORWARD: dennyekonge = ', denNyeKonge.shape,'\n FORWARD: embedded = ',embedded.shape,'\n FORWARD: dec_input = ',dec_input.shape)
+            #print('FORWARD: hidden =',hidden.shape,'\n FORWARD: dennyekonge = ', denNyeKonge.shape,'\n FORWARD: embedded = ',embedded.shape,'\n FORWARD: dec_input = ',dec_input.shape)
             #out, (hidden, cn) = self.rnn(embedded, (hidden,cn))
-            print('Skaal!')
+            #print('Skaal!')
             for i in range(dec_input.shape[1]):
                 out, (hidden, cn) = self.rnn(embedded[:,i,...].unsqueeze(1), (hidden,cn))
-                print('\n FORWARD: out = ',out.shape,'\n FORWARD: encoder_out = ',encoder_out.shape)
+                #print('\n FORWARD: out = ',out.shape,'\n FORWARD: encoder_out = ',encoder_out.shape)
 
                 part1 = torch.matmul(encoder_out,self.W_h) # gives the part1 dimension [ B, T, W_h[1] ] since W_h converts from [ d ] to [ W_h[1] ]
                 part2 = torch.matmul(out, self.W_s) # gives the part2 dimension [ B, T, W_s[1] ] since W_s converts from [ d ] to [ W_s[1] ]
                 bjorn = part1 + part2 + self.b_alpha.unsqueeze(0).unsqueeze(0)
-                print('FORWARD: part1 = ',part1.shape,'\n FORWARD: part2 = ',part2.shape,'\n FORWARD: biazz = ',self.b_alpha.unsqueeze(0).unsqueeze(0).shape)
-                print('FORWARD: part1 + part2', (part1 + part2.unsqueeze(1)).shape)
-                print('FORWARD: Bjorn = ',bjorn.shape, '\n FORWARD: tanh(bjorn) = ', F.tanh(bjorn).shape, '\n FORWARD: v_a = ', self.v_a.shape)
-                print('FORWARD: tanh(bjorn).type = ', F.tanh(bjorn).type)
-                print('FORWARD: v_a * tanh(bjorn) = ', torch.matmul(F.tanh(bjorn),self.v_a).shape)
+                #print('FORWARD: part1 = ',part1.shape,'\n FORWARD: part2 = ',part2.shape,'\n FORWARD: biazz = ',self.b_alpha.unsqueeze(0).unsqueeze(0).shape)
+                #print('FORWARD: part1 + part2', (part1 + part2.unsqueeze(1)).shape)
+                #print('FORWARD: Bjorn = ',bjorn.shape, '\n FORWARD: tanh(bjorn) = ', F.tanh(bjorn).shape, '\n FORWARD: v_a = ', self.v_a.shape)
+                #print('FORWARD: tanh(bjorn).type = ', F.tanh(bjorn).type)
+                #print('FORWARD: v_a * tanh(bjorn) = ', torch.matmul(F.tanh(bjorn),self.v_a).shape)
                 
-                Cool = torch.matmul(F.tanh(bjorn),self.v_a).permute(2,0,1)
-                Cool = torch.cat((out,Cool))
-                denNyeKonge[i,...] = F.softmax(self.V_out(self.V_in(torch.cat((out,Cool)))))
+                Cool = F.softmax(torch.matmul(torch.tanh(bjorn),self.v_a),dim=1)
+                #print('FORWARD: cool = ',Cool.shape,'\n FORWARD: cool sq = ',Cool.squeeze(2).shape)
 
-            print('DECODER: out =',out.shape,'\n DECODER: enc_out =',encoder_out.shape,'\n DECODER: embedded =',embedded.shape,'\n DECODER: hidden = ',hidden.shape)
-            # attention
-            
-            # ASSUMING THAT enc_out HAS THE DIMENSIONS [ B, T, d ]
+                #hStar = torch.matmul(encoder_out,Cool)
+                hStar = torch.sum(encoder_out * Cool,dim=1)
+                #print('FORWARD: hStar2 = ',hStar.shape)
+                #Cool = torch.cat((out,Cool))
+                #print('FORWARD: out = ',out.shape)
 
-            part1 = torch.matmul(encoder_out,self.W_h) # gives the part1 dimension [ B, T, W_h[1] ] since W_h converts from [ d ] to [ W_h[1] ]
-
-
-            # ASSUMIMG THAT out HAS THE DIMENSIONS [ B, T, d ]
-            part2 = torch.matmul(out, self.W_s) # gives the part2 dimension [ B, T, W_s[1] ] since W_s converts from [ d ] to [ W_s[1] ]
-            part2.unsqueeze(1)
-
-            print('DECODER: part1 = ',part1.shape,'\n','DECODER: part2 = ',part2.shape,'\n','DECODER: b_alpha = ',self.b_alpha.shape,'\n DECODER: Done printing.')
-
-            # ASSUMING DIMENSIONS [ B, T, b ].
-            john = part1 + part2 + self.b_alpha # Summs the "boxes" part1 & part2 and adds b_alpha along the [ b ] dimension
-
-            e = np.sum(self.v_a * torch.tanh(john), axis=2)
-
-            alpha = F.softmax(e)
+                tmp = F.log_softmax(self.V_out(self.V_in(torch.cat((out.squeeze(1),hStar),dim=1))),dim=1)
+                #print('FORWARD: tmp = ',tmp.shape,'\n FORWARD: tmp == ',tmp)
+                
+                denNyeKonge[...,i] = tmp
 
 
-
-
-
-
-
-
-
-            hStar = np.sum(atten*encoder_out, axis=denrigtige)
-
-
-            out = self.out(alpha)  # linear layer, out has now shape [batch, output_len, output_size]
-            output = F.log_softmax(alpha, -1)
+            output = denNyeKonge
+            #out = self.out(denNyeKonge)  # linear layer, out has now shape [batch, output_len, output_size]
+            #output = F.log_softmax(alpha, -1)
         else:
             # Take the EOS character only, for the whole batch, and unsqueeze so shape is [batch, 1]
             # This is the first input, then we will use as input the GRU output at the previous time step
@@ -308,7 +288,7 @@ def forward_pass(encoder, decoder, x, t, t_in, criterion, max_t_len, teacher_for
 
     :return: output (after log-softmax), loss, accuracy (per-symbol)
     """
-    print('FORWARD: t_in = ',t_in.shape,'\n FORWARD: x = ',x.shape)
+    #print('FORWARD: t_in = ',t_in.shape,'\n FORWARD: x = ',x.shape)
     #print(x.size(),'Et eller andet lort')
     # Run encoder and get last hidden state (and output)
     batch_size = x.size(0)
@@ -320,9 +300,11 @@ def forward_pass(encoder, decoder, x, t, t_in, criterion, max_t_len, teacher_for
     dec_h = enc_h  # Init hidden state of decoder as hidden state of encoder
     dec_input = t_in
     out = decoder(dec_input, dec_h, max_t_len, cn, enc_out, teacher_forcing)
-    out = out.permute(0, 2, 1)
+    #print('FORWARD_PASS: out = ',out.shape,'FORWARD_PASS: t = ',t.shape)
+    #print('OUT; ',out)
+    #out = out.permute(0, 2, 1)
     # Shape: [batch_size x num_classes x out_sequence_len], with second dim containing log probabilities
-
+    #print(hej)
     loss = criterion(out, t)
     pred = get_pred(log_probs=out)
     accuracy = (pred == t).type(torch.FloatTensor).mean()

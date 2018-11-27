@@ -12,17 +12,17 @@ NUM_INPUTS = 28 #No. of possible characters
 NUM_OUTPUTS = 11  # (0-9 + '#')
 
 ### Hyperparameters and general configs
-SEQ_LEN = 150
+SEQ_LEN = 100
 
 VOCAB = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',' ']
-ALPHA = 0.3
-MAX_LEN = 15
+ALPHA = 0.5
+MAX_LEN = 10
 
 # Hidden size of enc and dec need to be equal if last hidden of encoder becomes init hidden of decoder
 # Otherwise we would need e.g. a linear layer to map to a space with the correct dimension
 NUM_UNITS_ENC = NUM_UNITS_DEC = 2+SEQ_LEN
 TEST_SIZE = 240
-EPOCHS = 10
+EPOCHS = 5
 
 
 #assert TRAINING_SIZE % BATCH_SIZE == 0
@@ -79,7 +79,7 @@ targets_in = [t3[i * BATCH_SIZE: (i + 1) * BATCH_SIZE] for i in range(TRAINING_S
 # Quick and dirty - just loop over training set without reshuffling
 
 for epoch in range(1, EPOCHS + 1):
-    train(encoder, decoder, inputs, targets, targets_in, criterion, enc_optimizer, dec_optimizer, epoch, SEQ_LEN)
+    train(encoder, decoder, inputs, targets, targets_in, criterion, enc_optimizer, dec_optimizer, epoch, MAX_LEN)
     _, loss, accuracy = test(encoder, decoder, t1val, t2val, t2val, criterion, MAX_LEN)
     print('\nTest set: Average loss: {:.4f} \tAccuracy: {:.3f}%\n'.format(loss, accuracy.item()*100.))
 
