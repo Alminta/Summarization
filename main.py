@@ -1,4 +1,5 @@
 import torch
+import torch.optim as optim
 from funcs import *
 
 
@@ -58,6 +59,9 @@ Fullval,Shortval,t1val,t2val,t3val = generate(SEQ_NUM, SEQ_LEN, VOCAB, ALPHA,MAX
 #val_targets_in = torch.tensor(val_targets_in)
 #max_val_target_len = max(val_targets_seqlen)
 #test(encoder, decoder, val_inputs, val_targets, val_targets_in, criterion, max_val_target_len)
+
+#print('DATA: ',t1val,'\n',t2val,'\n',t3val,'\n',Fullval,'\n',Shortval)
+
 
 t1=t1.type(torch.LongTensor)
 t2=t2.type(torch.LongTensor)
