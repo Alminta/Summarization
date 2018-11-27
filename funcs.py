@@ -177,11 +177,7 @@ class DecoderRNN(nn.Module):
 
 
 
-<<<<<<< HEAD
-    def forward(self, inputs, hidden, output_len, cn, enc_out, teacher_forcing=False):
-=======
     def forward(self, inputs, hidden, output_len, cn, encoder_out, teacher_forcing=False):
->>>>>>> 167d530b8540a6b8ab8a1e595b3d40c05dfbc88e
         # Input shape: [batch, output_len]
         # Hidden shape: [seq_len=1, batch_size, hidden_dim] (the last hidden state of the encoder)
         #print('c_0: {:}'.format(c_0))
