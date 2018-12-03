@@ -301,6 +301,7 @@ class DecoderRNN(nn.Module):
                 #hStar = torch.matmul(encoder_out,Cool)
                 hStar = torch.sum(encoder_out * Cool,dim=1)
                 #print('FORWARD: hStar2 = ',hStar.shape)
+                #print(kska)
                 #Cool = torch.cat((out,Cool))
                 #print('FORWARD: out = ',out.shape)
 
