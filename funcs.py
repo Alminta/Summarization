@@ -453,8 +453,15 @@ def batchSorter(inputs,targets,targets_in,lengths):
     targets_new = []
     targets_in_new = []
     lengths_new = []
-    L = len(inputs)
-    for i in range(L):
+    X = []
+    for i in range(len(inputs)):
+
+        L = Sorter([inputs[i],targets[i],targets_in[i],lengths[i]],lengths[i])
+        inputs_new.append(L[0])
+        targets_new.append(L[1])
+        targets_in_new.append(L[2])
+        lengths_new.append(L[-1])
+        '''
         inputs_next = torch.zeros(inputs[0].shape)
         targets_next = torch.zeros(targets[0].shape)
         targets_in_next = torch.zeros(targets_in[0].shape)
@@ -467,8 +474,20 @@ def batchSorter(inputs,targets,targets_in,lengths):
         targets_new.append(targets_next.type(torch.LongTensor))
         targets_in_new.append(targets_in_next.type(torch.LongTensor))
         lengths_new.append(lengths_next.unsqueeze(1).type(torch.LongTensor))
+        '''
 
     return inputs_new,targets_new,targets_in_new,lengths_new
+def Sorter(List,length):
+    List_new = []
+    for i in List:
+        List_new.append(torch.zeros(i.shape).type(torch.LongTensor))
+    length_next,index = torch.sort(length.squeeze(1),descending=True)
+    index = index.tolist()
+    for j in range(len(List)):
+        for i in range(List[0].shape[0]):
+            List_new[j][i] = List[j][index[i]].type(torch.LongTensor)
+    return List_new
+
 
 def test(encoder, decoder, inputs, targets, targets_in, criterion, max_t_len, lengths):
     encoder.eval()

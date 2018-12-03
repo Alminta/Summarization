@@ -79,10 +79,10 @@ inputs = [t1[i * BATCH_SIZE: (i + 1) * BATCH_SIZE] for i in range(TRAINING_SIZE 
 targets = [t2[i * BATCH_SIZE: (i + 1) * BATCH_SIZE] for i in range(TRAINING_SIZE // BATCH_SIZE)]
 targets_in = [t3[i * BATCH_SIZE: (i + 1) * BATCH_SIZE] for i in range(TRAINING_SIZE // BATCH_SIZE)]
 lengths = [lenT[i * BATCH_SIZE: (i + 1) * BATCH_SIZE] for i in range(TRAINING_SIZE // BATCH_SIZE)]
-#print('MAIN: lengths = ', lengths[0],len(inputs))
-inputs, targets, targets_in, lengths = batchSorter(inputs, targets, targets_in, lengths)
+#print('MAIN: lengths = ', lengths[0])
+inputs, targets, targets_in, lengths= batchSorter(inputs, targets, targets_in, lengths)
 
-print('MAIN: lengths_sort = ', lengths[0])
+#print('MAIN: lengths_sort = ', lengths[0])
 #print('MAIN: lengths_sort = ',lengths_sort[0])      
 #print(stop)
 
