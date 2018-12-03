@@ -5,12 +5,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optimf
 from torch.nn.parameter import Parameter
+from torch.nn.utils.rnn import pad_packed_sequence, pack_padded_sequence
 
 device = "cpu"
-SEQ_NUM = 8000
+SEQ_NUM = 800
 TRAINING_SIZE = SEQ_NUM
 TEACHER_FORCING = True
-def generate(seqNum,seqLen,vocab,alpha,maxLen,minLen,maxLen):
+def generate(seqNum,vocab,alpha,maxLen,seqLen,minSeqLen):
     """
     Documentation here.
     """
@@ -24,7 +25,7 @@ def generate(seqNum,seqLen,vocab,alpha,maxLen,minLen,maxLen):
     t2 = torch.zeros(seqNum,maxLen).type(torch.IntTensor)
     t3 = torch.zeros(seqNum,maxLen).type(torch.IntTensor)
     lenT = torch.zeros(seqNum,1).type(torch.IntTensor)
-#*len(max(target,key=len))  
+
     listFull = []
     listShort = []
     for i in range(seqNum):
@@ -33,9 +34,9 @@ def generate(seqNum,seqLen,vocab,alpha,maxLen,minLen,maxLen):
         i1=0
         i2=0
         numNums = 0
-        while (len(listFull[i])+5)<(seqLen):
-            rndNum = np.random.randint(i1,maxLen)
-            if rndNum > minLen 
+        rndLen = np.random.randint(minSeqLen,seqLen)
+        #print('GENERATE: RANDOM LENGTH = ',rndLen,'GENERATE: minSeqLen = ',minSeqLen)
+        while (len(listFull[i])+5)<(rndLen):
 
             if random.uniform(0,1)<alpha and numNums<maxLen-1:
                 date = np.random.randint(0,9)
@@ -73,11 +74,13 @@ def generate(seqNum,seqLen,vocab,alpha,maxLen,minLen,maxLen):
         t2[i,i2]=10#EOSNum
         t3[i,0]=10#EOSNUM
         #t2[i,i2]=EOSNum
-      
+        lenT[i]=i1
+        #print('GENERATE: lenT = ',lenT[i])
+        #print(loikjlij)
         
     #t2,_=torch.sort(t2,1)
     
-    return listFull, listShort, t1, t2, t3
+    return listFull, listShort, t1, t2, t3, lenT
 
 
 
@@ -93,7 +96,6 @@ def generateSlightlyOld(seqNum,seqLen,vocab,alpha,maxLen):
     t2 = torch.zeros(seqNum,maxLen).type(torch.IntTensor)
     t3 = torch.zeros(seqNum,maxLen).type(torch.IntTensor)
     
-#*len(max(target,key=len))  
     listFull = []
     listShort = []
     for i in range(seqNum):
@@ -203,17 +205,20 @@ class EncoderRNN(nn.Module):
         rnn = nn.LSTM
         self.rnn = rnn(self.hidden_size, self.hidden_size, 1, batch_first=True)
 
-    def forward(self, inputs, hidden,cn):
+    def forward(self, inputs, hidden, cn, lengths):
         # Input shape [batch, seq_in_len]z
         inputs = inputs.long()
-
+        
         # Embedded shape [batch, seq_in_len, embed]
         embedded = self.embedding(inputs)
+        #print('ENCODER: lengths',lengths.shape,lengths)
         
+        embedded = pack_padded_sequence(embedded,lengths.squeeze(1).tolist(),batch_first=True)
         # Output shape [batch, seq_in_len, embed]
         # Hidden shape [1, batch, embed], last hidden state of the GRU cell
         # We will feed this last hidden state into the decoder
         output, (hidden,cn) = self.rnn(embedded, (hidden,cn))
+        output = pad_packed_sequence(output,batch_first=True)
         #print('ENCODER: output = ',output.shape,'\n ENCODER: hidden = ',hidden.shape)
         return output, hidden, cn
 
@@ -264,7 +269,7 @@ class DecoderRNN(nn.Module):
 
 
 
-    def forward(self, inputs, hidden, output_len, cn, encoder_out, teacher_forcing=False):
+    def forward(self, inputs, hidden, output_len, cn, encoder_out, lengths, teacher_forcing=False):
         # Input shape: [batch, output_len]
         # Hidden shape: [seq_len=1, batch_size, hidden_dim] (the last hidden state of the encoder)
         #print('c_0: {:}'.format(c_0))
@@ -276,16 +281,23 @@ class DecoderRNN(nn.Module):
 
             #print(dec_input)
             embedded = self.embedding(dec_input)
+            
             #print('FORWARD: hidden =',hidden.shape,'\n FORWARD: dennyekonge = ', denNyeKonge.shape,'\n FORWARD: embedded = ',embedded.shape,'\n FORWARD: dec_input = ',dec_input.shape)
             #out, (hidden, cn) = self.rnn(embedded, (hidden,cn))
             #print('Skaal!')
             #print(nyeK)
             for i in range(dec_input.shape[1]):
-                out, (hidden, cn) = self.rnn(embedded[:,i,...].unsqueeze(1), (hidden,cn))
+                print('FORWARD: EMBEDDED = ',embedded.shape,'FORWARD: hidden = ',hidden.shape)
+                print('FORWARD: lennn = ',lengths.squeeze(1).tolist())
+                print('FORWARD: embers = ',embedded[:,i,...].shape,'\nFORWARD: embers raw = ',embedded[:,i,...])
+                embeddedi = pack_padded_sequence(embedded[:,i,...],lengths.squeeze(1).tolist(),batch_first=True)
+                print('FORWARD: EMB I = ',embeddedi)
+                out, (hidden, cn) = self.rnn(embeddedi, (hidden,cn))
+                out = pad_packed_sequence(out,batch_first=True)
                 #print('\n FORWARD: out = ',out.shape,'\n FORWARD: encoder_out = ',encoder_out.shape)
 
                 part1 = torch.matmul(encoder_out,self.W_h) # gives the part1 dimension [ B, T, W_h[1] ] since W_h converts from [ d ] to [ W_h[1] ]
-                part2 = torch.matmul(out, self.W_s) # gives the part2 dimension [ B, T, W_s[1] ] since W_s converts from [ d ] to [ W_s[1] ]
+                part2 = torch.matmul(out[i], self.W_s) # gives the part2 dimension [ B, T, W_s[1] ] since W_s converts from [ d ] to [ W_s[1] ]
                 bjorn = part1 + part2 + self.b_alpha.unsqueeze(0).unsqueeze(0)
                 #print('FORWARD: part1 = ',part1.shape,'\n FORWARD: part2 = ',part2.shape,'\n FORWARD: biazz = ',self.b_alpha.unsqueeze(0).unsqueeze(0).shape)
                 #print('FORWARD: part1 + part2', (part1 + part2.unsqueeze(1)).shape)
@@ -305,7 +317,7 @@ class DecoderRNN(nn.Module):
                 #Cool = torch.cat((out,Cool))
                 #print('FORWARD: out = ',out.shape)
 
-                tmp = F.log_softmax(self.V_out(self.V_in(torch.cat((out.squeeze(1),hStar),dim=1))),dim=1)
+                tmp = F.log_softmax(self.V_out(self.V_in(torch.cat((out[i].squeeze(1),hStar),dim=1))),dim=1)
                 #print('FORWARD: tmp = ',tmp.shape,'\n FORWARD: tmp == ',tmp)
 
                 #tmp2 = F.log_softmax(torch.cat((out.squeeze(1),hStar),dim=1))
@@ -364,7 +376,7 @@ alpha = F.softmax(e)
 
 
 
-def forward_pass(encoder, decoder, x, t, t_in, criterion, max_t_len, teacher_forcing):
+def forward_pass(encoder, decoder, x, t, t_in, criterion, max_t_len, lengths, teacher_forcing=True):
     """
     Executes a forward pass through the whole model.
 
@@ -382,13 +394,13 @@ def forward_pass(encoder, decoder, x, t, t_in, criterion, max_t_len, teacher_for
     # Run encoder and get last hidden state (and output)
     batch_size = x.size(0)
     enc_h, cn = encoder.init_hidden(batch_size)
-    enc_out, enc_h, cn= encoder(x, enc_h,cn)
+    enc_out, enc_h, cn= encoder(x, enc_h, cn, lengths)
     #print('\n')
     #print(enc_out.size())
     #print(enc_h.size())
     dec_h = enc_h  # Init hidden state of decoder as hidden state of encoder
     dec_input = t_in
-    out = decoder(dec_input, dec_h, max_t_len, cn, enc_out, teacher_forcing)
+    out = decoder(dec_input, dec_h, max_t_len, cn, enc_out, lengths, teacher_forcing)
     #print('FORWARD_PASS: out = ',out.shape,'FORWARD_PASS: t = ',t.shape)
     #print('OUT; ',out)
     #out = out.permute(0, 2, 1)
@@ -399,7 +411,7 @@ def forward_pass(encoder, decoder, x, t, t_in, criterion, max_t_len, teacher_for
     accuracy = (pred == t).type(torch.FloatTensor).mean()
     return out, loss, accuracy
 
-def train(encoder, decoder, inputs, targets, targets_in, criterion, enc_optimizer, dec_optimizer, epoch, max_t_len):
+def train(encoder, decoder, inputs, targets, targets_in, criterion, enc_optimizer, dec_optimizer, epoch, max_t_len, lengths):
     encoder.train()
     decoder.train()
     #batch_size = inputs.size(0)
@@ -407,10 +419,13 @@ def train(encoder, decoder, inputs, targets, targets_in, criterion, enc_optimize
 
     #print(inputs[0].size(),targets[0].size(),targets_in[0].size())
     #print(inputs)
-    for batch_idx, (x, t, t_in) in enumerate(zip(inputs, targets, targets_in)):
+    for batch_idx, (x, t, t_in, lenn) in enumerate(zip(inputs, targets, targets_in, lengths)):
         #print(batch_idx)
-        #print(x.size())    
-        out, loss, accuracy = forward_pass(encoder, decoder, x, t, t_in, criterion, max_t_len, True)
+        #print(x.size()) 
+        #print(lenn)
+        #print(x)
+        #print(crash)   
+        out, loss, accuracy = forward_pass(encoder, decoder, x, t, t_in, criterion, max_t_len, lenn, True)
             
         
         enc_optimizer.zero_grad()
@@ -431,20 +446,38 @@ def train(encoder, decoder, inputs, targets, targets_in, criterion, enc_optimize
             encoder.train()
             decoder.train()
 
+def batchSorter(inputs,targets,targets_in,lengths):
+    inputs_new = []
+    targets_new = []
+    targets_in_new = []
+    lengths_new = []
+    L = len(inputs)
+    for i in range(L):
+        inputs_next = torch.zeros(inputs[0].shape)
+        targets_next = torch.zeros(targets[0].shape)
+        targets_in_next = torch.zeros(targets_in[0].shape)
+        lengths_next,index = torch.sort(lengths[i].squeeze(1),descending=True)     
+        for j in index.tolist():
+            inputs_next[j] = inputs[i][j]
+            targets_next[j] = targets[i][j]
+            targets_in_next[j] = targets_in[i][j]
+        inputs_new.append(inputs_next.type(torch.LongTensor))
+        targets_new.append(targets_next.type(torch.LongTensor))
+        targets_in_new.append(targets_in_next.type(torch.LongTensor))
+        lengths_new.append(lengths_next.unsqueeze(1).type(torch.LongTensor))
 
-def test(encoder, decoder, inputs, targets, targets_in, criterion, max_t_len):
+    return inputs_new,targets_new,targets_in_new,lengths_new
+
+def test(encoder, decoder, inputs, targets, targets_in, criterion, max_t_len, lengths):
     encoder.eval()
     decoder.eval()
     with torch.no_grad():
         inputs = inputs.to(device)
         targets = targets.long().to(device)
         targets_in = targets_in.long().to(device)
-        out, loss, accuracy = forward_pass(encoder, decoder, inputs, targets, targets_in, criterion, max_t_len,
-                                           teacher_forcing=TEACHER_FORCING)
+        out, loss, accuracy = forward_pass(encoder, decoder, inputs, targets, targets_in, criterion, max_t_len, lengths, teacher_forcing=TEACHER_FORCING)
     return out, loss, accuracy
 
-
-#mitjunk
 
 def numbers_to_text(seq):
     return "".join([str(to_np(i)) if to_np(i) != 10 else '#' for i in seq])
@@ -453,11 +486,7 @@ def to_np(x):
     return x.cpu().numpy()
 
 def get_pred(log_probs):
-    """
-    Get class prediction (digit prediction) from the net's output (the log_probs)
-    :param log_probs: Tensor of shape [batch_size x n_classes x sequence_len]
-    :return:
-    """
+
     return torch.argmax(log_probs, dim=1)
 
 # junk in the bottom
