@@ -7,7 +7,7 @@ import torch.optim as optimf
 from torch.nn.parameter import Parameter
 
 device = "cpu"
-SEQ_NUM = 800
+SEQ_NUM = 8000
 TRAINING_SIZE = SEQ_NUM
 TEACHER_FORCING = True
 def generate(seqNum,seqLen,vocab,alpha,maxLen):
@@ -174,10 +174,18 @@ class DecoderRNN(nn.Module):
 
         self.b_alpha = Parameter(nn.init.constant_(torch.Tensor(hidden_size),0))
 
-        self.V_in = nn.Linear(self.hidden_size*2,self.hidden_size*2)
+        self.V_in = nn.Linear(self.hidden_size*2,self.hidden_size,bias=True)
 
-        self.V_out = nn.Linear(self.hidden_size*2,self.output_size)
+        self.V_out = nn.Linear(self.hidden_size,self.output_size,bias=True)
+        """
+        self.VV_1 = Parameter(nn.init.kaiming_normal_(torch.Tensor(hidden_size*2,output_size)))
 
+        self.VV_2 = Parameter(nn.init.kaiming_normal_(torch.Tensor(output_size,output_size)))
+
+        self.bb_1 = Parameter(nn.inin.constant_(torch.Tensor(output_size),0))
+
+        self.bb_2 = Parameter(nn.inin.constant_(torch.Tensor(output_size),0))
+        """
 
 
 
@@ -196,6 +204,7 @@ class DecoderRNN(nn.Module):
             #print('FORWARD: hidden =',hidden.shape,'\n FORWARD: dennyekonge = ', denNyeKonge.shape,'\n FORWARD: embedded = ',embedded.shape,'\n FORWARD: dec_input = ',dec_input.shape)
             #out, (hidden, cn) = self.rnn(embedded, (hidden,cn))
             #print('Skaal!')
+            #print(nyeK)
             for i in range(dec_input.shape[1]):
                 out, (hidden, cn) = self.rnn(embedded[:,i,...].unsqueeze(1), (hidden,cn))
                 #print('\n FORWARD: out = ',out.shape,'\n FORWARD: encoder_out = ',encoder_out.shape)
@@ -211,7 +220,9 @@ class DecoderRNN(nn.Module):
                 
                 Cool = F.softmax(torch.matmul(torch.tanh(bjorn),self.v_a),dim=1)
                 #print('FORWARD: cool = ',Cool.shape,'\n FORWARD: cool sq = ',Cool.squeeze(2).shape)
-
+                
+                #print(Cool)
+                #print(Kewl)
                 #hStar = torch.matmul(encoder_out,Cool)
                 hStar = torch.sum(encoder_out * Cool,dim=1)
                 #print('FORWARD: hStar2 = ',hStar.shape)
@@ -221,7 +232,9 @@ class DecoderRNN(nn.Module):
 
                 tmp = F.log_softmax(self.V_out(self.V_in(torch.cat((out.squeeze(1),hStar),dim=1))),dim=1)
                 #print('FORWARD: tmp = ',tmp.shape,'\n FORWARD: tmp == ',tmp)
-                
+
+                #tmp2 = F.log_softmax(torch.cat((out.squeeze(1),hStar),dim=1))
+
                 denNyeKonge[...,i] = tmp
 
 
