@@ -280,17 +280,19 @@ class DecoderRNN(nn.Module):
             denNyeKonge = torch.zeros(hidden.shape[1],self.output_size,dec_input.shape[1]) # Init the new king. Cheers!
 
             #print(dec_input)
-            embedded = self.embedding(dec_input)
+            
             
             #print('FORWARD: hidden =',hidden.shape,'\n FORWARD: dennyekonge = ', denNyeKonge.shape,'\n FORWARD: embedded = ',embedded.shape,'\n FORWARD: dec_input = ',dec_input.shape)
             #out, (hidden, cn) = self.rnn(embedded, (hidden,cn))
             #print('Skaal!')
             #print(nyeK)
-            for i in range(dec_input.shape[1]):
-                print('FORWARD: EMBEDDED = ',embedded.shape,'FORWARD: hidden = ',hidden.shape)
+            for i in range(dec_input.shape[1]): # Does some attention (:
+                #print('FORWARD: EMBEDDED = ',embedded.shape,'FORWARD: hidden = ',hidden.shape)
+                embedded = self.embedding(dec_input[:,i,...])
                 print('FORWARD: lennn = ',lengths.squeeze(1).tolist())
-                print('FORWARD: embers = ',embedded[:,i,...].shape,'\nFORWARD: embers raw = ',embedded[:,i,...])
-                embeddedi = pack_padded_sequence(embedded[:,i,...],lengths.squeeze(1).tolist(),batch_first=True)
+                print('FORWARD: EMB RAW = ',embedded.shape)
+                #print('FORWARD: embers = ',embedded[:,i,...].shape,'\nFORWARD: embers raw = ',embedded[:,i,...])
+                embeddedi = pack_padded_sequence(embedded,lengths.squeeze(1).tolist(),batch_first=True)
                 print('FORWARD: EMB I = ',embeddedi)
                 out, (hidden, cn) = self.rnn(embeddedi, (hidden,cn))
                 out = pad_packed_sequence(out,batch_first=True)
