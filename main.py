@@ -12,16 +12,16 @@ NUM_INPUTS = 28 #No. of possible characters
 NUM_OUTPUTS = 11  # (0-9 + '#')
 
 ### Hyperparameters and general configs
-SEQ_LEN = 100
-MIN_SEQ_LEN = 50
+SEQ_LEN = 50
+MIN_SEQ_LEN = 45
 
 VOCAB = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',' ']
-ALPHA = 0.3
-MAX_LEN = 10
+ALPHA = 0.6
+MAX_LEN = 5
 
 # Hidden size of enc and dec need to be equal if last hidden of encoder becomes init hidden of decoder
 # Otherwise we would need e.g. a linear layer to map to a space with the correct dimension
-NUM_UNITS_ENC = NUM_UNITS_DEC = SEQ_LEN+2
+NUM_UNITS_ENC = NUM_UNITS_DEC = 2*SEQ_LEN+2
 TEST_SIZE = 240
 EPOCHS = 110
 
@@ -36,14 +36,14 @@ LEARNING_RATE = 0.05
 
 
 
-encoder = EncoderRNN(NUM_INPUTS, NUM_UNITS_ENC).to(device)
-decoder = DecoderRNN(NUM_UNITS_DEC, NUM_OUTPUTS).to(device)
-enc_optimizer = optim.Adam(encoder.parameters(), lr=LEARNING_RATE,weight_decay=1e-6)#,momentum=0.5)
-dec_optimizer = optim.Adam(decoder.parameters(), lr=LEARNING_RATE,weight_decay=1e-6)#,momentum=0.5)
+encoder = EncoderRNN(NUM_INPUTS, NUM_UNITS_ENC, SEQ_LEN).to(device)
+decoder = DecoderRNN(NUM_UNITS_DEC, NUM_OUTPUTS, MAX_LEN).to(device)
+enc_optimizer = optim.Adam(encoder.parameters(), lr=LEARNING_RATE,weight_decay=0e-6)#,momentum=0.5)
+dec_optimizer = optim.Adam(decoder.parameters(), lr=LEARNING_RATE,weight_decay=0)#,momentum=0.5)
 criterion = nn.NLLLoss()
 #print(encoder.parameters())
 # Get training set
-_,_,t1,t2,t3,lenT = generate(SEQ_NUM, VOCAB, ALPHA,MAX_LEN, SEQ_LEN, MIN_SEQ_LEN)
+_,_,t1,t2,t3,lenEnc,lenDec = generate(SEQ_NUM, VOCAB, ALPHA,MAX_LEN, SEQ_LEN, MIN_SEQ_LEN)
 
 
 #print(t1.size(),t2.size(),t3.size())
@@ -55,7 +55,7 @@ _,_,t1,t2,t3,lenT = generate(SEQ_NUM, VOCAB, ALPHA,MAX_LEN, SEQ_LEN, MIN_SEQ_LEN
 #unique_text_targets = set(text_targ)
 
 # Get validation set
-Fullval,Shortval,t1val,t2val,t3val,lenTVal = generate(SEQ_NUM, VOCAB, ALPHA,MAX_LEN, SEQ_LEN, MIN_SEQ_LEN)
+Fullval,Shortval,t1val,t2val,t3val,lenEncVal,lenDecVal = generate(SEQ_NUM, VOCAB, ALPHA,MAX_LEN, SEQ_LEN, MIN_SEQ_LEN)
 
 #val_inputs = torch.tensor(val_inputs)
 #val_targets = torch.tensor(val_targets)
@@ -78,13 +78,13 @@ t3val=t3val.type(torch.LongTensor)
 inputs = [t1[i * BATCH_SIZE: (i + 1) * BATCH_SIZE] for i in range(TRAINING_SIZE // BATCH_SIZE)]
 targets = [t2[i * BATCH_SIZE: (i + 1) * BATCH_SIZE] for i in range(TRAINING_SIZE // BATCH_SIZE)]
 targets_in = [t3[i * BATCH_SIZE: (i + 1) * BATCH_SIZE] for i in range(TRAINING_SIZE // BATCH_SIZE)]
-lengths = [lenT[i * BATCH_SIZE: (i + 1) * BATCH_SIZE] for i in range(TRAINING_SIZE // BATCH_SIZE)]
-#print('MAIN: lengths = ', lengths[0])
-inputs, targets, targets_in, lengths= batchSorter(inputs, targets, targets_in, lengths)
+lenEnc = [lenEnc[i * BATCH_SIZE: (i + 1) * BATCH_SIZE] for i in range(TRAINING_SIZE // BATCH_SIZE)]
+lenDec = [lenDec[i * BATCH_SIZE: (i + 1) * BATCH_SIZE] for i in range(TRAINING_SIZE // BATCH_SIZE)]
 
-#print('MAIN: lengths_sort = ', lengths[0])
-#print('MAIN: lengths_sort = ',lengths_sort[0])      
-#print(stop)
+inputs, targets, targets_in, lenDec, lenEnc = batchSorter(inputs, targets, targets_in, lenDec, lenEnc)
+
+[t1val, t2val, t3val, lenDecVal, lenEncVal, _] = Sorter([t1val, t2val, t3val, lenDecVal, lenEncVal],lenEncVal)
+
 
 # Quick and dirty - just loop over training set without reshuffling
 
@@ -92,17 +92,17 @@ inputs, targets, targets_in, lengths= batchSorter(inputs, targets, targets_in, l
 
 
 for epoch in range(1, EPOCHS + 1):
-    train(encoder, decoder, inputs, targets, targets_in, criterion, enc_optimizer, dec_optimizer, epoch, MAX_LEN, lengths)
-    _, loss, accuracy = test(encoder, decoder, t1val, t2val, t3val, criterion, MAX_LEN, lenTVal)
+    train(encoder, decoder, inputs, targets, targets_in, criterion, enc_optimizer, dec_optimizer, epoch, MAX_LEN, lenEnc, lenDec)
+    _, loss, accuracy = test(encoder, decoder, t1val, t2val, t3val, criterion, MAX_LEN, lenEncVal, lenDecVal)
     print('\nTest set: Average loss: {:.4f} \tAccuracy: {:.3f}%\n'.format(loss, accuracy.item()*100.))
 
     # Show examples
     print("Examples: prediction | input")
-    out, _, _ = test(encoder, decoder, t1val[:10], t2val[:10], t3val[:10], criterion, MAX_LEN, lenTVal[:10])
+    out, _, _ = test(encoder, decoder, t1val[:20], t2val[:20], t3val[:20], criterion, MAX_LEN, lenEncVal[:20], lenDecVal[:20])
     pred = get_pred(out)
     pred_text = [numbers_to_text(sample) for sample in pred]
-    for i in range(10):
-        print(pred_text[i], "\t", Shortval[i], "\t" ,t2val[i])
+    for i in range(20):
+        print(pred_text[i], "\t", "Shortval[i]", "\t" ,t2val[i])
     #print()
 
 #print(Fullval,Shortval,t1val,t2val)    
