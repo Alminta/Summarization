@@ -10,7 +10,7 @@ print("Device in use:", device)
 
 thresser = 5
 NUM_INPUTS = 27+10 #No. of possible characters
-NUM_OUTPUTS = 11#thresser+1  # (0-9 + '#')
+NUM_OUTPUTS = thresser+1  # (0-9 + '#')
 
 ### Hyperparameters and general configs
 SEQ_LEN = 100
@@ -18,7 +18,7 @@ MIN_SEQ_LEN = 50
 
 VOCAB = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',' ']
 ALPHA = 0.3
-MAX_LEN = 5
+MAX_LEN = 15
 
 # Hidden size of enc and dec need to be equal if last hidden of encoder becomes init hidden of decoder
 # Otherwise we would need e.g. a linear layer to map to a space with the correct dimension
@@ -50,8 +50,8 @@ dec_optimizer = optim.RMSprop(decoder.parameters(), lr=LEARNING_RATE,weight_deca
 criterion = nn.NLLLoss()
 #print(encoder.parameters())
 # Get training set
-#_,_,t1,t2,t3,lenEnc,lenDec = generateVarLen(SEQ_NUM, VOCAB, ALPHA, MAX_LEN, SEQ_LEN, MIN_SEQ_LEN)
-_,_,t1,t2,t3,lenEnc,lenDec = generateMixed(SEQ_NUM, VOCAB, ALPHA,0.5,thresser, MAX_LEN, SEQ_LEN, MIN_SEQ_LEN)
+_,_,t1,t2,t3,lenEnc,lenDec = generateVarLen(SEQ_NUM, VOCAB, ALPHA, MAX_LEN, SEQ_LEN, MIN_SEQ_LEN)
+#_,_,t1,t2,t3,lenEnc,lenDec = generateMixed(SEQ_NUM, VOCAB, ALPHA,0.5,thresser, MAX_LEN, SEQ_LEN, MIN_SEQ_LEN)
 
 #print(t1.size(),t2.size(),t3.size())
 #inputs, _, targets_in, targets, targets_seqlen, _, _, _, text_targ = generate(TRAINING_SIZE, min_len=MIN_SEQ_LEN, max_len=MAX_SEQ_LEN)
@@ -62,8 +62,8 @@ _,_,t1,t2,t3,lenEnc,lenDec = generateMixed(SEQ_NUM, VOCAB, ALPHA,0.5,thresser, M
 #unique_text_targets = set(text_targ)
 
 # Get validation set    
-#Fullval,Shortval,t1val,t2val,t3val,lenEncVal,lenDecVal = generateVarLen(SEQ_NUM, VOCAB, ALPHA,MAX_LEN, SEQ_LEN, MIN_SEQ_LEN)
-Fullval,Shortval,t1val,t2val,t3val,lenEncVal,lenDecVal = generateMixed(SEQ_NUM, VOCAB, ALPHA,0.5,thresser,MAX_LEN, SEQ_LEN, MIN_SEQ_LEN)
+Fullval,Shortval,t1val,t2val,t3val,lenEncVal,lenDecVal = generateVarLen(SEQ_NUM, VOCAB, ALPHA,MAX_LEN, SEQ_LEN, MIN_SEQ_LEN)
+#Fullval,Shortval,t1val,t2val,t3val,lenEncVal,lenDecVal = generateMixed(SEQ_NUM, VOCAB, ALPHA,0.5,thresser,MAX_LEN, SEQ_LEN, MIN_SEQ_LEN)
 
 #val_inputs = torch.tensor(val_inputs)
 #val_targets = torch.tensor(val_targets)

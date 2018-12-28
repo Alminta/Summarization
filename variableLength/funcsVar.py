@@ -306,7 +306,7 @@ class EncoderRNN(nn.Module):
     def forward(self, inputs, hidden, cn, lenenc):
         # Input shape [batch, seq_in_len]z
         inputs = inputs.long()
-        #print(inputs.shape)
+        print(inputs.shape)
         #print(inputs)
         # Embedded shape [batch, seq_in_len, embed]
         embedded = self.embedding(inputs)

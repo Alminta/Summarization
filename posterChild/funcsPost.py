@@ -264,6 +264,7 @@ class DecoderRNNMo(nn.Module):
             denNyeKonge = torch.zeros(hidden.shape[1],self.output_size,dec_input.shape[1]) # Init the new king. Cheers!
 
             #print(dec_input)
+            print('FORWARD: outputsize = ',self.output_size,'\nFORWARD: hiddensize = ',self.hidden_size,'\nFORWARD: decinput = ',dec_input.shape,'\n',dec_input)
             embedded = self.embedding(dec_input)
             #print('FORWARD: hidden =',hidden.shape,'\n FORWARD: dennyekonge = ', denNyeKonge.shape,'\n FORWARD: embedded = ',embedded.shape,'\n FORWARD: dec_input = ',dec_input.shape)
             #out, (hidden, cn) = self.rnn(embedded, (hidden,cn))

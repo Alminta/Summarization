@@ -7,7 +7,7 @@ torch.manual_seed(420)
 device = "cpu"
 print("Device in use:", device)
 
-NUM_INPUTS = 28 #No. of possible characters
+NUM_INPUTS = 27 #No. of possible characters
 NUM_OUTPUTS = 11  # (0-9 + '#')
 
 ### Hyperparameters and general configs
@@ -93,7 +93,7 @@ losslistMo = []
 acclistNo = []
 acclistMo = []
 
-
+"""
 for epoch in range(1, EPOCHS + 1):
     trainNo(encoderNo, decoderNo, inputs, targets, targets_in, criterion, enc_optimizerNo, dec_optimizerNo, epoch, SEQ_LEN)
     _, lossNo, accuracyNo = testNo(encoderNo, decoderNo, t1val, t2val, t3val, criterion, MAX_LEN)
@@ -137,7 +137,7 @@ for epoch in range(1, EPOCHS + 1):
     for i in range(10):
         print(pred_text[i], "\t", Shortval[i], "\t" ,t2val[i])
 
-"""
+
 print(losslistNo,'\n',acclistNo,'\n',losslistMo,'\n',acclistMo)
 
 #print(Fullval,Shortval,t1val,t2val)
