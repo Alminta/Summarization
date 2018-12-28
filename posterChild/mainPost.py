@@ -11,17 +11,17 @@ NUM_INPUTS = 28 #No. of possible characters
 NUM_OUTPUTS = 11  # (0-9 + '#')
 
 ### Hyperparameters and general configs
-SEQ_LEN = 100
+SEQ_LEN = 50
 
 VOCAB = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',' ']
-ALPHA = 0.5
-MAX_LEN = 10
+ALPHA = 0.6
+MAX_LEN = 5
 
 # Hidden size of enc and dec need to be equal if last hidden of encoder becomes init hidden of decoder
 # Otherwise we would need e.g. a linear layer to map to a space with the correct dimension
 NUM_UNITS_ENC = NUM_UNITS_DEC = 2+SEQ_LEN
 TEST_SIZE = 240
-EPOCHS = 25
+EPOCHS = 35
 
 
 #assert TRAINING_SIZE % BATCH_SIZE == 0
@@ -93,7 +93,7 @@ losslistMo = []
 acclistNo = []
 acclistMo = []
 
-"""
+
 for epoch in range(1, EPOCHS + 1):
     trainNo(encoderNo, decoderNo, inputs, targets, targets_in, criterion, enc_optimizerNo, dec_optimizerNo, epoch, SEQ_LEN)
     _, lossNo, accuracyNo = testNo(encoderNo, decoderNo, t1val, t2val, t3val, criterion, MAX_LEN)
@@ -104,7 +104,7 @@ for epoch in range(1, EPOCHS + 1):
     losslistNo.append(tmp1)
     acclistNo.append(tmp2)
     print('\nTest set - no attention: Average loss: {:.4f} \tAccuracy: {:.3f}%\n'.format(lossNo, accuracyNo.item()*100.))
-    
+        
 
     # Show examples
     print("Examples - no attention: prediction | input")
@@ -137,7 +137,7 @@ for epoch in range(1, EPOCHS + 1):
     for i in range(10):
         print(pred_text[i], "\t", Shortval[i], "\t" ,t2val[i])
 
-
+"""
 print(losslistNo,'\n',acclistNo,'\n',losslistMo,'\n',acclistMo)
 
 #print(Fullval,Shortval,t1val,t2val)
